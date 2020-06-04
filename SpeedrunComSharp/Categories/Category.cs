@@ -53,7 +53,7 @@ namespace SpeedrunComSharp
 
             //Parse Links
 
-            var properties = categoryElement.Properties as IDictionary<string, dynamic>;
+            var properties = categoryElement as IDictionary<string, dynamic>;
             var links = properties["links"] as IEnumerable<dynamic>;
 
             var gameUri = links.First(x => x.rel == "game").uri as string;
@@ -61,8 +61,9 @@ namespace SpeedrunComSharp
 
             if (properties.ContainsKey("game"))
             {
-                var gameElement = properties["game"].data;
-                var game = Game.Parse(client, gameElement) as Game;
+                dynamic gameElement = properties["game"]["data"];
+                Game game = Game.Parse(client, gameElement);
+
                 category.game = new Lazy<Game>(() => game);
             }
             else
@@ -72,8 +73,7 @@ namespace SpeedrunComSharp
 
             if (properties.ContainsKey("variables"))
             {
-                Func<dynamic, Variable> parser = x => Variable.Parse(client, x) as Variable;
-                var variables = client.ParseCollection(properties["variables"].data, parser);
+                var variables = client.ParseCollection(properties["variables"].data, new Func<dynamic, Variable>(x => Variable.Parse(client, x) as Variable));
                 category.variables = new Lazy<ReadOnlyCollection<Variable>>(() => variables);
             }
             else

@@ -20,15 +20,15 @@ namespace SpeedrunComSharp
         {
             var ruleset = new Ruleset();
 
-            var properties = rulesetElement.Properties as IDictionary<string, dynamic>;
+            var properties = rulesetElement as IDictionary<string, dynamic>;
 
             ruleset.ShowMilliseconds = properties["show-milliseconds"];
             ruleset.RequiresVerification = properties["require-verification"];
             ruleset.RequiresVideo = properties["require-video"];
 
-            Func<dynamic, TimingMethod> timingMethodParser = x => TimingMethodHelpers.FromString(x as string);
+            Func<dynamic, TimingMethod> timingMethodParser = x => TimingMethodHelpers.FromString(x?.ToString());
             ruleset.TimingMethods = client.ParseCollection(properties["run-times"], timingMethodParser);
-            ruleset.DefaultTimingMethod = TimingMethodHelpers.FromString(properties["default-time"]);
+            ruleset.DefaultTimingMethod = TimingMethodHelpers.FromString(properties["default-time"]?.ToString());
 
             ruleset.EmulatorsAllowed = properties["emulators-allowed"];
 

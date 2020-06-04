@@ -1,6 +1,7 @@
 ﻿using System;
 using System.Collections.Generic;
 using System.Collections.ObjectModel;
+using System.Dynamic;
 using System.IO;
 using System.Linq;
 using System.Net;
@@ -146,15 +147,19 @@ namespace SpeedrunComSharp
 
         internal APIException ParseException(Stream stream)
         {
-            var json = JSON.FromStream(stream);
-            var properties = json.Properties as IDictionary<string, dynamic>;
+            ExpandoObject json = JSON.FromStream(stream);
+            IDictionary<string, dynamic> properties = json as IDictionary<string, dynamic>;
+
             if (properties.ContainsKey("errors"))
             {
-                var errors = json.errors as IList<dynamic>;
-                return new APIException(json.message as string, errors.Select(x => x as string));
+                var errors = properties["errors"] as IList<dynamic>;
+
+                return new APIException(properties["message"] as string, errors.Select(x => x as string));
             }
             else
-                return new APIException(json.message as string);
+            {
+                return new APIException(properties["message"] as string);
+            }
         }
 
         internal dynamic DoPostRequest(Uri uri, string postBody)
@@ -245,7 +250,7 @@ namespace SpeedrunComSharp
             return elements.Select(parser).ToList().AsReadOnly();
         }
 
-        private IEnumerable<T> doPaginatedRequest<T>(Uri uri, Func<dynamic, T> parser)
+        private IEnumerable<T> DoPaginatedRequestInner<T>(Uri uri, Func<dynamic, T> parser)
         {
             do
             {
@@ -281,7 +286,7 @@ namespace SpeedrunComSharp
 
         internal IEnumerable<T> DoPaginatedRequest<T>(Uri uri, Func<dynamic, T> parser)
         {
-            return doPaginatedRequest(uri, parser).Cache();
+            return DoPaginatedRequestInner(uri, parser).Cache();
         }
     }
 }

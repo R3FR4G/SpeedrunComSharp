@@ -17,7 +17,7 @@ namespace SpeedrunComSharp
 
             var image = new ImageAsset();
 
-            var uri = imageElement.uri as string;
+            var uri = imageElement.uri?.ToString();
             image.Uri = new Uri(uri);
             image.Width = (int)imageElement.width;
             image.Height = (int)imageElement.height;

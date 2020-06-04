@@ -10,26 +10,44 @@ namespace SpeedrunComSharp
         
         public static new Record Parse(SpeedrunComClient client, dynamic recordElement)
         {
-            var record = new Record();
+            IDictionary<string, dynamic> properties = recordElement as IDictionary<string, dynamic>;
 
-            record.Rank = recordElement.place;
+            Record record = new Record();
 
-            //Parse potential embeds
-
-            var properties = recordElement.Properties as IDictionary<string, dynamic>;
+            if (properties.ContainsKey("place"))
+            {
+                recordElement.Rank = (int)properties["place"];
+            }
 
             if (properties.ContainsKey("game"))
+            {
                 recordElement.run.game = recordElement.game;
+            }
+
             if (properties.ContainsKey("category"))
+            {
                 recordElement.run.category = recordElement.category;
+            }
+
             if (properties.ContainsKey("level"))
+            {
                 recordElement.run.level = recordElement.level;
+            }
+
             if (properties.ContainsKey("players"))
+            {
                 recordElement.run.players = recordElement.players;
+            }
+
             if (properties.ContainsKey("region"))
+            {
                 recordElement.run.region = recordElement.region;
+            }
+
             if (properties.ContainsKey("platform"))
+            {
                 recordElement.run.platform = recordElement.platform;
+            }
 
             Run.Parse(record, client, recordElement.run);
 
@@ -46,7 +64,9 @@ namespace SpeedrunComSharp
             var other = obj as Record;
 
             if (other == null)
+            {
                 return false;
+            }
 
             return ID == other.ID;
         }

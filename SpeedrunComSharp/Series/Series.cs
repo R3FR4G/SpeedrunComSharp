@@ -42,6 +42,7 @@ namespace SpeedrunComSharp
             var series = new Series();
 
             //Parse Attributes
+            IDictionary<string, dynamic> properties = seriesElement as IDictionary<string, dynamic>;
 
             series.ID = seriesElement.id as string;
             series.Name = seriesElement.names.international as string;
@@ -57,42 +58,44 @@ namespace SpeedrunComSharp
 
             //Parse Embeds
 
-            if (seriesElement.moderators is DynamicJsonObject && seriesElement.moderators.Properties.ContainsKey("data"))
+            if (properties.ContainsKey("moderators"))
             {
-                Func<dynamic, User> userParser = x => User.Parse(client, x) as User;
-                ReadOnlyCollection<User> users = client.ParseCollection(seriesElement.moderators.data, userParser);
-                series.moderatorUsers = new Lazy<ReadOnlyCollection<User>>(() => users);
-            }
-            else if (seriesElement.moderators is DynamicJsonObject)
-            {
-                var moderatorsProperties = seriesElement.moderators.Properties as IDictionary<string, dynamic>;
-                series.Moderators = moderatorsProperties.Select(x => Moderator.Parse(client, x)).ToList().AsReadOnly();
+                if (properties["moderators"].ContainsKey("data"))
+                {
+                    ReadOnlyCollection<User> users = client.ParseCollection(seriesElement.moderators.data, new Func<dynamic, User>(x => User.Parse(client, x) as User));
+                    series.moderatorUsers = new Lazy<ReadOnlyCollection<User>>(() => users);
+                }
+                else
+                {
+                    var moderatorsProperties = seriesElement.moderators.Properties as IDictionary<string, dynamic>;
+                    series.Moderators = moderatorsProperties.Select(x => Moderator.Parse(client, x)).ToList().AsReadOnly();
 
-                series.moderatorUsers = new Lazy<ReadOnlyCollection<User>>(
-                    () =>
-                    {
-                        ReadOnlyCollection<User> users;
-
-                        if (series.Moderators.Count(x => !x.user.IsValueCreated) > 1)
+                    series.moderatorUsers = new Lazy<ReadOnlyCollection<User>>(
+                        () =>
                         {
-                            users = client.Games.GetGame(series.ID, embeds: new GameEmbeds(embedModerators: true)).ModeratorUsers;
+                            ReadOnlyCollection<User> users;
 
-                            foreach (var user in users)
+                            if (series.Moderators.Count(x => !x.user.IsValueCreated) > 1)
                             {
-                                var moderator = series.Moderators.FirstOrDefault(x => x.UserID == user.ID);
-                                if (moderator != null)
+                                users = client.Games.GetGame(series.ID, embeds: new GameEmbeds(embedModerators: true)).ModeratorUsers;
+
+                                foreach (var user in users)
                                 {
-                                    moderator.user = new Lazy<User>(() => user);
+                                    var moderator = series.Moderators.FirstOrDefault(x => x.UserID == user.ID);
+                                    if (moderator != null)
+                                    {
+                                        moderator.user = new Lazy<User>(() => user);
+                                    }
                                 }
                             }
-                        }
-                        else
-                        {
-                            users = series.Moderators.Select(x => x.User).ToList().AsReadOnly();
-                        }
+                            else
+                            {
+                                users = series.Moderators.Select(x => x.User).ToList().AsReadOnly();
+                            }
 
-                        return users;
-                    });
+                            return users;
+                        });
+                }
             }
             else
             {
@@ -118,12 +121,12 @@ namespace SpeedrunComSharp
 
         public override bool Equals(object obj)
         {
-            var other = obj as Series;
-
-            if (other == null)
+            if (!(obj is Series))
+            {
                 return false;
+            }
 
-            return ID == other.ID;
+            return ID == (obj as Series).ID;
         }
 
         public override string ToString()

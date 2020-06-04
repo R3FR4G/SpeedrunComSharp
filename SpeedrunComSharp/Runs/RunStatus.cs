@@ -38,23 +38,24 @@ namespace SpeedrunComSharp
 
         public static RunStatus Parse(SpeedrunComClient client, dynamic statusElement)
         {
-            var status = new RunStatus();
-
-            var properties = statusElement.Properties as IDictionary<string, dynamic>;
+            RunStatus status = new RunStatus();
+            IDictionary<string, dynamic> properties = statusElement as IDictionary<string, dynamic>;
 
             status.Type = ParseType(statusElement.status as string);
 
-            if (status.Type == RunStatusType.Rejected 
-                || status.Type == RunStatusType.Verified)
+            if (status.Type == RunStatusType.Rejected || status.Type == RunStatusType.Verified)
             {
-                status.ExaminerUserID = statusElement.examiner as string;
+                status.ExaminerUserID = properties["examiner"] as string;
                 status.examiner = new Lazy<User>(() => client.Users.GetUser(status.ExaminerUserID));
 
                 if (status.Type == RunStatusType.Verified)
                 {
                     var date = properties["verify-date"] as string;
+
                     if (!string.IsNullOrEmpty(date))
+                    {
                         status.VerifyDate = DateTime.Parse(date, CultureInfo.InvariantCulture, DateTimeStyles.AssumeUniversal);
+                    }
                 }
             }
             else
@@ -73,9 +74,13 @@ namespace SpeedrunComSharp
         public override string ToString()
         {
             if (Type == RunStatusType.Rejected)
+            {
                 return "Rejected:" + Reason;
+            }
             else
+            {
                 return Type.ToString();
+            }
         }
     }
 }

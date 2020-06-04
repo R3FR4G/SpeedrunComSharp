@@ -24,25 +24,27 @@ namespace SpeedrunComSharp
 
         public static UserNameStyle Parse(SpeedrunComClient client, dynamic styleElement)
         {
-            var style = new UserNameStyle();
+            UserNameStyle style = new UserNameStyle();
+            IDictionary<string, dynamic> properties = styleElement as IDictionary<string, dynamic>;
 
             style.IsGradient = styleElement.style == "gradient";
 
             if (style.IsGradient)
             {
-                var properties = styleElement.Properties as IDictionary<string, dynamic>;
-                var colorFrom = properties["color-from"];
-                var colorTo = properties["color-to"];
+                IDictionary<string, dynamic> colorFromProperties = properties["color-from"] as IDictionary<string, dynamic>;
+                IDictionary<string, dynamic> colorToProperties = properties["color-to"] as IDictionary<string, dynamic>;
 
-                style.LightGradientStartColorCode = colorFrom.light as string;
-                style.LightGradientEndColorCode = colorTo.light as string;
-                style.DarkGradientStartColorCode = colorFrom.dark as string;
-                style.DarkGradientEndColorCode = colorTo.dark as string;
+                style.LightGradientStartColorCode = colorFromProperties["light"] as string;
+                style.LightGradientEndColorCode = colorToProperties["light"] as string;
+                style.DarkGradientStartColorCode = colorFromProperties["dark"] as string;
+                style.DarkGradientEndColorCode = colorToProperties["dark"] as string;
             }
             else
             {
-                style.LightSolidColorCode = styleElement.color.light as string;
-                style.DarkSolidColorCode = styleElement.color.dark as string;
+                IDictionary<string, dynamic> colorProperties = properties["color"] as IDictionary<string, dynamic>;
+
+                style.LightSolidColorCode = colorProperties["light"] as string;
+                style.DarkSolidColorCode = colorProperties["dark"] as string;
             }
 
             return style;

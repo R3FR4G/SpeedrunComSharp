@@ -62,42 +62,46 @@ namespace SpeedrunComSharp
         {
             var user = new User();
 
-            var properties = userElement.Properties as IDictionary<string, dynamic>;
+            var properties = userElement as IDictionary<string, dynamic>;
 
             //Parse Attributes
 
-            user.ID = userElement.id as string;
-            user.Name = userElement.names.international as string;
-            user.JapaneseName = userElement.names.japanese as string;
-            user.WebLink = new Uri(userElement.weblink as string);
+            user.ID = properties["id"] as string;
+            user.WebLink = new Uri(properties["weblink"] as string);
             user.NameStyle = UserNameStyle.Parse(client, properties["name-style"]) as UserNameStyle;
-            user.Role = parseUserRole(userElement.role as string);
+            user.Role = parseUserRole(properties["role"] as string);
 
-            var signUpDate = userElement.signup as string;
-            if (!string.IsNullOrEmpty(signUpDate))
-                user.SignUpDate = DateTime.Parse(signUpDate, CultureInfo.InvariantCulture, DateTimeStyles.AssumeUniversal);
+            var nameProperties = properties["names"] as IDictionary<string, dynamic>;
 
-            user.Location = Location.Parse(client, userElement.location) as Location;
+            user.Name = nameProperties["international"] as string;
+            user.JapaneseName = nameProperties["japanese"] as string;
 
-            var twitchLink = userElement.twitch;
+            if (properties.ContainsKey("signup"))
+            {
+                user.SignUpDate = DateTime.Parse(properties["signup"].ToString(), CultureInfo.InvariantCulture, DateTimeStyles.AssumeUniversal);
+            }
+
+            user.Location = Location.Parse(client, properties["location"]) as Location;
+
+            var twitchLink = properties["twitch"];
             if (twitchLink != null)
-                user.TwitchProfile = new Uri(twitchLink.uri as string);
+                user.TwitchProfile = new Uri(twitchLink["uri"] as string);
 
-            var hitboxLink = userElement.hitbox;
+            var hitboxLink = properties["hitbox"];
             if (hitboxLink != null)
-                user.HitboxProfile = new Uri(hitboxLink.uri as string);
+                user.HitboxProfile = new Uri(hitboxLink["uri"] as string);
 
-            var youtubeLink = userElement.youtube;
+            var youtubeLink = properties["youtube"];
             if (youtubeLink != null)
-                user.YoutubeProfile = new Uri(youtubeLink.uri as string);
+                user.YoutubeProfile = new Uri(youtubeLink["uri"] as string);
 
-            var twitterLink = userElement.twitter;
+            var twitterLink = properties["twitter"];
             if (twitterLink != null)
-                user.TwitterProfile = new Uri(twitterLink.uri as string);
+                user.TwitterProfile = new Uri(twitterLink["uri"] as string);
 
-            var speedRunsLiveLink = userElement.speedrunslive;
+            var speedRunsLiveLink = properties["speedrunslive"];
             if (speedRunsLiveLink != null)
-                user.SpeedRunsLiveProfile = new Uri(speedRunsLiveLink.uri as string);
+                user.SpeedRunsLiveProfile = new Uri(speedRunsLiveLink["uri"] as string);
 
             //Parse Links
 

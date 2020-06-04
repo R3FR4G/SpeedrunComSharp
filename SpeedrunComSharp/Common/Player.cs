@@ -26,35 +26,35 @@ namespace SpeedrunComSharp
         {
             var player = new Player();
 
-            var properties = playerElement.Properties as IDictionary<string, dynamic>;
+            var properties = playerElement as IDictionary<string, dynamic>;
 
             if (properties.ContainsKey("uri"))
             {
-                if (playerElement.rel as string == "user")
+                if (properties["rel"] == "user")
                 {
-                    player.UserID = playerElement.id as string;
+                    player.UserID = properties["id"];
                     player.user = new Lazy<User>(() => client.Users.GetUser(player.UserID));
                     player.guest = new Lazy<Guest>(() => null);
                 }
                 else
                 {
-                    player.GuestName = playerElement.name as string;
+                    player.GuestName = properties["name"];
                     player.guest = new Lazy<Guest>(() => client.Guests.GetGuest(player.GuestName));
                     player.user = new Lazy<User>(() => null);
                 }
             }
             else
             {
-                if (playerElement.rel as string == "user")
+                if (properties["rel"] == "user")
                 {
-                    var user = User.Parse(client, playerElement) as User;
+                    var user = User.Parse(client, properties) as User;
                     player.user = new Lazy<User>(() => user);
                     player.UserID = user.ID;
                     player.guest = new Lazy<Guest>(() => null);
                 }
                 else
                 {
-                    var guest = Guest.Parse(client, playerElement) as Guest;
+                    var guest = Guest.Parse(client, properties) as Guest;
                     player.guest = new Lazy<Guest>(() => guest);
                     player.GuestName = guest.Name;
                     player.user = new Lazy<User>(() => null);

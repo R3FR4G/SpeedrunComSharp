@@ -47,48 +47,53 @@ namespace SpeedrunComSharp
         internal static void Parse(Run run, SpeedrunComClient client, dynamic runElement)
         {
             //Parse Attributes
+            IDictionary<string, dynamic> properties = runElement as IDictionary<string, dynamic>;
 
-            run.ID = runElement.id as string;
-            run.WebLink = new Uri(runElement.weblink as string);
-            run.Videos = RunVideos.Parse(client, runElement.videos) as RunVideos;
-            run.Comment = runElement.comment as string;
-            run.Status = RunStatus.Parse(client, runElement.status) as RunStatus;
+            run.ID = properties["id"] as string;
+            run.WebLink = new Uri(properties["weblink"] as string);
+            run.Videos = RunVideos.Parse(client, properties["videos"]) as RunVideos;
+            run.Comment = properties["comment"] as string;
+            run.Status = RunStatus.Parse(client, properties["status"]) as RunStatus;
 
             Func<dynamic, Player> parsePlayer = x => Player.Parse(client, x) as Player;
 
-            if (runElement.players is IEnumerable<dynamic>)
+            if (properties["players"] is IEnumerable<dynamic>)
             {
-                run.Players = client.ParseCollection(runElement.players, parsePlayer);
+                run.Players = client.ParseCollection(properties["players"], parsePlayer);
             }
-            else if (runElement.players is System.Collections.ArrayList && runElement.players.Count == 0)
+            else if (properties["players"] is System.Collections.ArrayList && properties["players"].Count == 0)
             {
                 run.Players = new List<Player>().AsReadOnly();
             }
             else
             {
-                run.Players = client.ParseCollection(runElement.players.data, parsePlayer);
+                run.Players = client.ParseCollection(properties["players"].data, parsePlayer);
             }
 
-            var runDate = runElement.date;
-            if (!string.IsNullOrEmpty(runDate))
-                run.Date = DateTime.Parse(runDate, CultureInfo.InvariantCulture, DateTimeStyles.AssumeUniversal);
+            if (properties.ContainsKey("date"))
+            {
+                run.Date = DateTime.Parse(properties["date"].ToString(), CultureInfo.InvariantCulture, DateTimeStyles.AssumeUniversal);
+            }
 
-            var dateSubmitted = runElement.submitted;
-            if (!string.IsNullOrEmpty(dateSubmitted))
-                run.DateSubmitted = DateTime.Parse(dateSubmitted, CultureInfo.InvariantCulture, DateTimeStyles.AssumeUniversal);
+            if (properties.ContainsKey("submitted"))
+            {
+                run.DateSubmitted = DateTime.Parse(properties["submitted"].ToString(), CultureInfo.InvariantCulture, DateTimeStyles.AssumeUniversal);
+            }
 
-            run.Times = RunTimes.Parse(client, runElement.times) as RunTimes;
-            run.System = RunSystem.Parse(client, runElement.system) as RunSystem;
+            run.Times = RunTimes.Parse(client, properties["times"]) ;
+            run.System = RunSystem.Parse(client, properties["system"]);
 
-            var splits = runElement.splits;
+            var splits = properties["splits"];
+
             if (splits != null)
             {
                 run.SplitsUri = new Uri(splits.uri as string);
             }
 
-            if (runElement.values is DynamicJsonObject)
+            if (properties.ContainsKey("values"))
             {
-                var valueProperties = runElement.values.Properties as IDictionary<string, dynamic>;
+                var valueProperties = properties["values"] as IDictionary<string, dynamic>;
+
                 run.VariableValues = valueProperties.Select(x => VariableValue.ParseValueDescriptor(client, x) as VariableValue).ToList().AsReadOnly();
             }
             else
@@ -98,16 +103,14 @@ namespace SpeedrunComSharp
 
             //Parse Links
 
-            var properties = runElement.Properties as IDictionary<string, dynamic>;
-
             if (properties["game"] is string)
             {
-                run.GameID = runElement.game as string;
+                run.GameID = properties["game"] as string;
                 run.game = new Lazy<Game>(() => client.Games.GetGame(run.GameID));
             }
             else
             {
-                var game = Game.Parse(client, properties["game"].data) as Game;
+                var game = Game.Parse(client, properties["game"]["data"]) as Game;
                 run.game = new Lazy<Game>(() => game);
                 run.GameID = game.ID;
             }
@@ -118,15 +121,18 @@ namespace SpeedrunComSharp
             }
             else if (properties["category"] is string)
             {
-                run.CategoryID = runElement.category as string;
+                run.CategoryID = properties["category"] as string;
                 run.category = new Lazy<Category>(() => client.Categories.GetCategory(run.CategoryID));
             }
             else
             {
-                var category = Category.Parse(client, properties["category"].data) as Category;
+                var category = Category.Parse(client, properties["category"]["data"]) as Category;
                 run.category = new Lazy<Category>(() => category);
+
                 if (category != null)
+                {
                     run.CategoryID = category.ID;
+                }
             }
 
             if (properties["level"] == null)
@@ -135,26 +141,32 @@ namespace SpeedrunComSharp
             }
             else if (properties["level"] is string)
             {
-                run.LevelID = runElement.level as string;
+                run.LevelID = properties["level"] as string;
                 run.level = new Lazy<Level>(() => client.Levels.GetLevel(run.LevelID));
             }
             else
             {
-                var level = Level.Parse(client, properties["level"].data) as Level;
+                Level level = Level.Parse(client, properties["level"].data);
+
                 run.level = new Lazy<Level>(() => level);
+
                 if (level != null)
+                {
                     run.LevelID = level.ID;
+                }
             }
 
             if (properties.ContainsKey("platform"))
             {
-                var platform = Platform.Parse(client, properties["platform"].data) as Platform;
+                Platform platform = Platform.Parse(client, properties["platform"].data);
+
                 run.System.platform = new Lazy<Platform>(() => platform);
             }
 
             if (properties.ContainsKey("region"))
             {
-                var region = Region.Parse(client, properties["region"].data) as Region;
+                Region region = Region.Parse(client, properties["region"].data);
+
                 run.System.region = new Lazy<Region>(() => region);
             }
 
@@ -184,12 +196,12 @@ namespace SpeedrunComSharp
 
         public override bool Equals(object obj)
         {
-            var other = obj as Run;
-
-            if (other == null)
+            if (!(obj is Run))
+            {
                 return false;
+            }
 
-            return ID == other.ID;
+            return ID == (obj as Run).ID;
         }
 
         public override string ToString()

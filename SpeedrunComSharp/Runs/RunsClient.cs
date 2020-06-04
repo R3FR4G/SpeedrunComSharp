@@ -1,5 +1,6 @@
 ﻿using System;
 using System.Collections.Generic;
+using System.Dynamic;
 using System.Globalization;
 using System.Linq;
 
@@ -21,12 +22,14 @@ namespace SpeedrunComSharp
             return SpeedrunComClient.GetAPIUri(string.Format("{0}{1}", Name, subUri));
         }
 
-        public Run GetRunFromSiteUri(string siteUri, RunEmbeds embeds = default(RunEmbeds))
+        public Run GetRunFromSiteUri(string siteUri, RunEmbeds embeds = default)
         {
             var id = GetRunIDFromSiteUri(siteUri);
 
             if (string.IsNullOrEmpty(id))
+            {
                 return null;
+            }
 
             return GetRun(id, embeds);
         }
@@ -49,29 +52,56 @@ namespace SpeedrunComSharp
             string platformId = null, string regionId = null,
             bool onlyEmulatedRuns = false, RunStatusType? status = null,
             int? elementsPerPage = null,
-            RunEmbeds embeds = default(RunEmbeds),
-            RunsOrdering orderBy = default(RunsOrdering))
+            RunEmbeds embeds = default,
+            RunsOrdering orderBy = default)
         {
             var parameters = new List<string>() { embeds.ToString() };
 
             if (!string.IsNullOrEmpty(userId))
+            {
                 parameters.Add(string.Format("user={0}", Uri.EscapeDataString(userId)));
+            }
+
             if (!string.IsNullOrEmpty(guestName))
+            {
                 parameters.Add(string.Format("guest={0}", Uri.EscapeDataString(guestName)));
+            }
+
             if (!string.IsNullOrEmpty(examerUserId))
+            {
                 parameters.Add(string.Format("examiner={0}", Uri.EscapeDataString(examerUserId)));
+            }
+
             if (!string.IsNullOrEmpty(gameId))
+            {
                 parameters.Add(string.Format("game={0}", Uri.EscapeDataString(gameId)));
+            }
+
             if (!string.IsNullOrEmpty(levelId))
+            {
                 parameters.Add(string.Format("level={0}", Uri.EscapeDataString(levelId)));
+            }
+
             if (!string.IsNullOrEmpty(categoryId))
+            {
                 parameters.Add(string.Format("category={0}", Uri.EscapeDataString(categoryId)));
+            }
+
             if (!string.IsNullOrEmpty(platformId))
+            {
                 parameters.Add(string.Format("platform={0}", Uri.EscapeDataString(platformId)));
+            }
+
             if (!string.IsNullOrEmpty(regionId))
+            {
                 parameters.Add(string.Format("region={0}", Uri.EscapeDataString(regionId)));
+            }
+
             if (onlyEmulatedRuns)
+            {
                 parameters.Add("emulated=yes");
+            }
+
             if (status.HasValue)
             {
                 switch (status.Value)
@@ -84,25 +114,23 @@ namespace SpeedrunComSharp
                         parameters.Add("status=verified"); break;
                 }
             }
+
             if (elementsPerPage.HasValue)
+            {
                 parameters.Add(string.Format("max={0}", elementsPerPage));
+            }
 
             parameters.AddRange(orderBy.ToParameters());
 
             var uri = GetRunsUri(parameters.ToParameters());
-            return baseClient.DoPaginatedRequest(uri,
-                x => Run.Parse(baseClient, x) as Run);
+
+            return baseClient.DoPaginatedRequest(uri, x => Run.Parse(baseClient, x) as Run);
         }
 
-        public Run GetRun(string runId,
-            RunEmbeds embeds = default(RunEmbeds))
+        public Run GetRun(string runId, RunEmbeds embeds = default)
         {
-            var parameters = new List<string>() { embeds.ToString() };
-
-            var uri = GetRunsUri(string.Format("/{0}{1}",
-                Uri.EscapeDataString(runId),
-                parameters.ToParameters()));
-
+            List<string> parameters = new List<string>() { embeds.ToString() };
+            var uri = GetRunsUri(string.Format("/{0}{1}", Uri.EscapeDataString(runId), parameters.ToParameters()));
             var result = baseClient.DoRequest(uri);
 
             return Run.Parse(baseClient, result.data);
@@ -131,8 +159,8 @@ namespace SpeedrunComSharp
 
             var uri = GetRunsUri(parameters.ToParameters());
 
-            dynamic postBody = new DynamicJsonObject();
-            dynamic runElement = new DynamicJsonObject();
+            dynamic postBody = new ExpandoObject();
+            dynamic runElement = new ExpandoObject();
 
             runElement.category = categoryId;
             runElement.platform = platformId;
@@ -149,11 +177,9 @@ namespace SpeedrunComSharp
             if (verify.HasValue)
                 runElement.verified = verify;
 
-            dynamic timesElement = new DynamicJsonObject();
+            dynamic timesElement = new ExpandoObject();
 
-            if (!realTime.HasValue
-                && !realTimeWithoutLoads.HasValue
-                && !gameTime.HasValue)
+            if (!realTime.HasValue && !realTimeWithoutLoads.HasValue && !gameTime.HasValue)
             {
                 throw new APIException("You need to provide at least one time.");
             }
@@ -192,7 +218,7 @@ namespace SpeedrunComSharp
                     foreach (var variable in variablesList)
                     {
                         var key = variable.VariableID;
-                        dynamic value = new DynamicJsonObject();
+                        dynamic value = new ExpandoObject();
 
                         if (variable.IsCustomValue)
                         {

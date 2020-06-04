@@ -1,4 +1,6 @@
-﻿namespace SpeedrunComSharp
+﻿using System.Collections.Generic;
+
+namespace SpeedrunComSharp
 {
     public class Location
     {
@@ -9,14 +11,17 @@
 
         public static Location Parse(SpeedrunComClient client, dynamic locationElement)
         {
-            var location = new Location();
-            
-            if (locationElement != null)
-            {
-                location.Country = Country.Parse(client, locationElement.country) as Country;
+            Location location = new Location();
+            IDictionary<string, dynamic> properties = locationElement as IDictionary<string, dynamic>;
 
-                if (locationElement.region != null)
-                    location.Region = CountryRegion.Parse(client, locationElement.region) as CountryRegion;
+            if (properties != null)
+            {
+                location.Country = Country.Parse(client, properties["country"]);
+
+                if (properties.ContainsKey("region"))
+                {
+                    location.Region = CountryRegion.Parse(client, properties["region"]);
+                }
             }
             
             return location;
@@ -25,9 +30,13 @@
         public override string ToString()
         {
             if (Region == null)
+            {
                 return Country.Name;
+            }
             else
+            {
                 return Country.Name + " " + Region.Name;
+            }
         }
     }
 }

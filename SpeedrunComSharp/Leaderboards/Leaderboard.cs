@@ -1,6 +1,7 @@
 ﻿using System;
 using System.Collections.Generic;
 using System.Collections.ObjectModel;
+using System.Dynamic;
 using System.Linq;
 
 namespace SpeedrunComSharp
@@ -52,33 +53,42 @@ namespace SpeedrunComSharp
 
         private Leaderboard() { }
 
-        public static Leaderboard Parse(SpeedrunComClient client, dynamic leaderboardElement)
+        public static Leaderboard Parse(SpeedrunComClient client, ExpandoObject leaderboardElement)
         {
-            var leaderboard = new Leaderboard();
-
-            var properties = leaderboardElement.Properties as IDictionary<string, dynamic>;
+            Leaderboard leaderboard = new Leaderboard();
+            IDictionary<string, dynamic> properties = leaderboardElement as IDictionary<string, dynamic>;
 
             //Parse Attributes
 
-            leaderboard.WebLink = new Uri(leaderboardElement.weblink as string);
+            leaderboard.WebLink = new Uri(properties["weblink"] as string);
 
-            var emulators = leaderboardElement.emulators as string;
+            string emulators = properties["emulators"] as string;
+
             if (emulators == "true")
+            {
                 leaderboard.EmulatorFilter = EmulatorsFilter.OnlyEmulators;
+            }
             else if (emulators == "false")
+            {
                 leaderboard.EmulatorFilter = EmulatorsFilter.NoEmulators;
+            }
             else
+            {
                 leaderboard.EmulatorFilter = EmulatorsFilter.NotSet;
+            }
 
             leaderboard.AreRunsWithoutVideoFilteredOut = properties["video-only"];
 
             //TODO Not actually optional
-            if (leaderboardElement.timing != null)
-                leaderboard.OrderedBy = TimingMethodHelpers.FromString(leaderboardElement.timing as string);
-
-            if (leaderboardElement.values is DynamicJsonObject)
+            if (properties["timing"] != null)
             {
-                var valueProperties = leaderboardElement.values.Properties as IDictionary<string, dynamic>;
+                leaderboard.OrderedBy = TimingMethodHelpers.FromString(properties["timing"] as string);
+            }
+
+            if (properties.ContainsKey("values"))
+            {
+                IDictionary<string, dynamic> valueProperties = properties["values"] as IDictionary<string, dynamic>;
+
                 leaderboard.VariableFilters = valueProperties.Select(x => VariableValue.ParseValueDescriptor(client, x) as VariableValue).ToList().AsReadOnly();
             }
             else
@@ -87,33 +97,36 @@ namespace SpeedrunComSharp
             }
 
             Func<dynamic, Record> recordParser = x => Record.Parse(client, x) as Record;
-            leaderboard.Records = client.ParseCollection(leaderboardElement.runs, recordParser);
+            leaderboard.Records = client.ParseCollection(properties["runs"], recordParser);
 
             //Parse Links
 
             if (properties["game"] is string)
             {
-                leaderboard.GameID = leaderboardElement.game as string;
+                leaderboard.GameID = properties["game"] as string;
                 leaderboard.game = new Lazy<Game>(() => client.Games.GetGame(leaderboard.GameID));
             }
             else
             {
-                var game = Game.Parse(client, properties["game"].data) as Game;
+                Game game = Game.Parse(client, properties["game"]["data"]) as Game;
                 leaderboard.game = new Lazy<Game>(() => game);
                 leaderboard.GameID = game.ID;
             }
 
             if (properties["category"] is string)
             {
-                leaderboard.CategoryID = leaderboardElement.category as string;
+                leaderboard.CategoryID = properties["category"] as string;
                 leaderboard.category = new Lazy<Category>(() => client.Categories.GetCategory(leaderboard.CategoryID));
             }
             else
             {
-                var category = Category.Parse(client, properties["category"].data) as Category;
+                Category category = Category.Parse(client, properties["category"]["data"]) as Category;
                 leaderboard.category = new Lazy<Category>(() => category);
+
                 if (category != null)
+                {
                     leaderboard.CategoryID = category.ID;
+                }
             }
 
             if (properties["level"] == null)
@@ -122,15 +135,18 @@ namespace SpeedrunComSharp
             }
             else if (properties["level"] is string)
             {
-                leaderboard.LevelID = leaderboardElement.level as string;
+                leaderboard.LevelID = properties["level"] as string;
                 leaderboard.level = new Lazy<Level>(() => client.Levels.GetLevel(leaderboard.LevelID));
             }
             else
             {
-                var level = Level.Parse(client, properties["level"].data) as Level;
+                var level = Level.Parse(client, properties["level"]["data"]) as Level;
                 leaderboard.level = new Lazy<Level>(() => level);
+
                 if (level != null)
+                {
                     leaderboard.LevelID = level.ID;
+                }
             }
 
             if (properties["platform"] == null)
@@ -144,10 +160,13 @@ namespace SpeedrunComSharp
             }
             else
             {
-                var platform = Platform.Parse(client, properties["platform"].data) as Platform;
+                var platform = Platform.Parse(client, properties["platform"]["data"]) as Platform;
                 leaderboard.platformFilter = new Lazy<Platform>(() => platform);
+
                 if (platform != null)
+                {
                     leaderboard.PlatformIDOfFilter = platform.ID;
+                }
             }
 
             if (properties["region"] == null)
@@ -161,18 +180,22 @@ namespace SpeedrunComSharp
             }
             else
             {
-                var region = Region.Parse(client, properties["region"].data) as Region;
+                var region = Region.Parse(client, properties["region"]["data"]) as Region;
                 leaderboard.regionFilter = new Lazy<Region>(() => region);
+
                 if (region != null)
+                {
                     leaderboard.RegionIDOfFilter = region.ID;
+                }
             }
 
             //Parse Embeds
 
             if (properties.ContainsKey("players"))
             {
-                Func<dynamic, Player> playerParser = x => Player.Parse(client, x) as Player;
-                var players = client.ParseCollection(leaderboardElement.players.data, playerParser) as ReadOnlyCollection<Player>;
+                IDictionary<string, dynamic> playerProperties = properties["players"] as IDictionary<string, dynamic>;
+
+                ReadOnlyCollection<Player> players = client.ParseCollection(playerProperties["data"], new Func<dynamic, Player>(x => Player.Parse(client, x) as Player));
 
                 foreach (var record in leaderboard.Records)
                 {
@@ -189,7 +212,7 @@ namespace SpeedrunComSharp
             if (properties.ContainsKey("regions"))
             {
                 Func<dynamic, Region> regionParser = x => Region.Parse(client, x) as Region;
-                var regions = client.ParseCollection(leaderboardElement.regions.data, regionParser) as ReadOnlyCollection<Region>;
+                var regions = client.ParseCollection(properties["regions"]["data"], regionParser) as ReadOnlyCollection<Region>;
                 
                 foreach (var record in leaderboard.Records)
                 {
@@ -206,7 +229,7 @@ namespace SpeedrunComSharp
             if (properties.ContainsKey("platforms"))
             {
                 Func<dynamic, Platform> platformParser = x => Platform.Parse(client, x) as Platform;
-                var platforms = client.ParseCollection(leaderboardElement.platforms.data, platformParser) as ReadOnlyCollection<Platform>;
+                var platforms = client.ParseCollection(properties["platforms"]["data"], platformParser) as ReadOnlyCollection<Platform>;
 
                 foreach (var record in leaderboard.Records)
                 {
@@ -234,7 +257,7 @@ namespace SpeedrunComSharp
             if (properties.ContainsKey("variables"))
             {
                 Func<dynamic, Variable> variableParser = x => Variable.Parse(client, x) as Variable;
-                var variables = client.ParseCollection(leaderboardElement.variables.data, variableParser) as ReadOnlyCollection<Variable>;
+                var variables = client.ParseCollection(properties["variables"]["data"], variableParser) as ReadOnlyCollection<Variable>;
 
                 patchVariablesOfRecords(variables);
 

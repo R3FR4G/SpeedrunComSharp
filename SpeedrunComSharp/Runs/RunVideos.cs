@@ -1,4 +1,5 @@
 ﻿using System;
+using System.Collections.Generic;
 using System.Collections.ObjectModel;
 
 namespace SpeedrunComSharp
@@ -28,13 +29,24 @@ namespace SpeedrunComSharp
         public static RunVideos Parse(SpeedrunComClient client, dynamic videosElement)
         {
             if (videosElement == null)
+            {
                 return null;
+            }
 
-            var videos = new RunVideos();
+            IDictionary<string, dynamic> properties = videosElement as IDictionary<string, dynamic>;
 
-            videos.Text = videosElement.text as string;
+            RunVideos videos = new RunVideos();
 
-            videos.Links = client.ParseCollection(videosElement.links, new Func<dynamic, Uri>(parseVideoLink));
+            if (properties.ContainsKey("text"))
+            {
+                videos.Text = properties["text"];
+            }
+
+            if (properties.ContainsKey("links"))
+            {
+                videos.Links = client.ParseCollection(properties["links"], new Func<dynamic, Uri>(parseVideoLink));
+            }
+
 
             return videos;
         }
