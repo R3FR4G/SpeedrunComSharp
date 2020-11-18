@@ -49,10 +49,8 @@ namespace SpeedrunComSharp
             var variable = new Variable();
 
             variable.client = client;
-
-            var properties = variableElement.Properties as IDictionary<string, dynamic>;
+            var properties = variableElement as IDictionary<string, dynamic>;
             var links = properties["links"] as IEnumerable<dynamic>;
-
             //Parse Attributes
 
             variable.ID = variableElement.id as string;
@@ -61,22 +59,19 @@ namespace SpeedrunComSharp
             variable.IsMandatory = (bool)(variableElement.mandatory ?? false);
             variable.IsUserDefined = (bool)(properties["user-defined"] ?? false);
             variable.IsUsedForObsoletingRuns = (bool)variableElement.obsoletes;
-
             if (!(variableElement.values.choices is ArrayList))
             {
-                var choiceElements = variableElement.values.choices.Properties as IDictionary<string, dynamic>;
+                var choiceElements = variableElement.values.choices as IDictionary<string, dynamic>;
                 variable.Values = choiceElements.Select(x => VariableValue.ParseIDPair(client, variable, x) as VariableValue).ToList().AsReadOnly();
             }
             else
             {
                 variable.Values = new ReadOnlyCollection<VariableValue>(new VariableValue[0]);
             }
-
-            var valuesProperties = variableElement.values.Properties as IDictionary<string, dynamic>;
+            var valuesProperties = variableElement.values as IDictionary<string, dynamic>;
             var defaultValue = valuesProperties["default"] as string;
             if (!string.IsNullOrEmpty(defaultValue))
                 variable.DefaultValue = variable.Values.FirstOrDefault(x => x.ID == defaultValue);
-
             variable.IsSubcategory = (bool)(properties["is-subcategory"] ?? false);
 
             //Parse Links
@@ -92,7 +87,6 @@ namespace SpeedrunComSharp
             {
                 variable.game = new Lazy<Game>(() => null);
             }
-
             variable.CategoryID = variableElement.category as string;
             if (!string.IsNullOrEmpty(variable.CategoryID))
             {
@@ -102,7 +96,6 @@ namespace SpeedrunComSharp
             {
                 variable.category = new Lazy<Category>(() => null);
             }
-
             if (!string.IsNullOrEmpty(variable.Scope.LevelID))
             {
                 variable.level = new Lazy<Level>(() => client.Levels.GetLevel(variable.Scope.LevelID));
@@ -111,7 +104,6 @@ namespace SpeedrunComSharp
             {
                 variable.level = new Lazy<Level>(() => null);
             }
-
             return variable;
         }
 

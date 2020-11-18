@@ -50,11 +50,9 @@ namespace SpeedrunComSharp
 
                 if (status.Type == RunStatusType.Verified)
                 {
-                    var date = properties["verify-date"] as string;
-
-                    if (!string.IsNullOrEmpty(date))
+                    if(properties.TryGetValue("verify-date", out dynamic date))
                     {
-                        status.VerifyDate = DateTime.Parse(date, CultureInfo.InvariantCulture, DateTimeStyles.AssumeUniversal);
+                        status.VerifyDate = (DateTime)date;
                     }
                 }
             }

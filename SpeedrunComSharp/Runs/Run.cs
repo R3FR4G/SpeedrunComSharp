@@ -3,6 +3,7 @@ using System.Collections.Generic;
 using System.Collections.ObjectModel;
 using System.Globalization;
 using System.Linq;
+using System.Xml;
 
 namespace SpeedrunComSharp
 {
@@ -72,15 +73,15 @@ namespace SpeedrunComSharp
 
             if (properties.ContainsKey("date"))
             {
-                run.Date = DateTime.Parse(properties["date"].ToString(), CultureInfo.InvariantCulture, DateTimeStyles.AssumeUniversal);
+                run.Date = DateTime.ParseExact(properties["date"].ToString(), "yyyy-MM-dd", CultureInfo.InvariantCulture);
             }
 
             if (properties.ContainsKey("submitted"))
             {
-                run.DateSubmitted = DateTime.Parse(properties["submitted"].ToString(), CultureInfo.InvariantCulture, DateTimeStyles.AssumeUniversal);
+                run.DateSubmitted = (DateTime)runElement.submitted;
             }
 
-            run.Times = RunTimes.Parse(client, properties["times"]) ;
+            run.Times = RunTimes.Parse(client, properties["times"]);
             run.System = RunSystem.Parse(client, properties["system"]);
 
             var splits = properties["splits"];

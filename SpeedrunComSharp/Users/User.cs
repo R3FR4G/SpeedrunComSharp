@@ -63,7 +63,6 @@ namespace SpeedrunComSharp
             var user = new User();
 
             var properties = userElement as IDictionary<string, dynamic>;
-
             //Parse Attributes
 
             user.ID = properties["id"] as string;
@@ -72,37 +71,34 @@ namespace SpeedrunComSharp
             user.Role = parseUserRole(properties["role"] as string);
 
             var nameProperties = properties["names"] as IDictionary<string, dynamic>;
-
             user.Name = nameProperties["international"] as string;
             user.JapaneseName = nameProperties["japanese"] as string;
-
             if (properties.ContainsKey("signup"))
             {
-                user.SignUpDate = DateTime.Parse(properties["signup"].ToString(), CultureInfo.InvariantCulture, DateTimeStyles.AssumeUniversal);
+                user.SignUpDate = (DateTime)userElement.signup;
             }
-
             user.Location = Location.Parse(client, properties["location"]) as Location;
 
             var twitchLink = properties["twitch"];
             if (twitchLink != null)
-                user.TwitchProfile = new Uri(twitchLink["uri"] as string);
+                user.TwitchProfile = new Uri((string)twitchLink.uri);
 
             var hitboxLink = properties["hitbox"];
             if (hitboxLink != null)
-                user.HitboxProfile = new Uri(hitboxLink["uri"] as string);
+                user.HitboxProfile = new Uri((string)hitboxLink.uri);
 
             var youtubeLink = properties["youtube"];
             if (youtubeLink != null)
-                user.YoutubeProfile = new Uri(youtubeLink["uri"] as string);
+                user.YoutubeProfile = new Uri((string)youtubeLink.uri);
 
             var twitterLink = properties["twitter"];
             if (twitterLink != null)
-                user.TwitterProfile = new Uri(twitterLink["uri"] as string);
+                user.TwitterProfile = new Uri((string)twitterLink.uri);
 
             var speedRunsLiveLink = properties["speedrunslive"];
             if (speedRunsLiveLink != null)
-                user.SpeedRunsLiveProfile = new Uri(speedRunsLiveLink["uri"] as string);
-
+                user.SpeedRunsLiveProfile = new Uri((string)speedRunsLiveLink.uri);
+            
             //Parse Links
 
             user.Runs = client.Runs.GetRuns(userId: user.ID);
@@ -123,7 +119,6 @@ namespace SpeedrunComSharp
 
                     return records;
                 });
-
             return user;
         }
 

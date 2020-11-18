@@ -37,7 +37,7 @@ namespace SpeedrunComSharp
             //Parse Attributes
 
             notification.ID = notificationElement.id as string;
-            notification.TimeCreated = DateTime.Parse(notificationElement.created as string, CultureInfo.InvariantCulture, DateTimeStyles.AssumeUniversal);
+            notification.TimeCreated = (DateTime)notificationElement.created;
             notification.Status = NotificationStatusHelpers.Parse(notificationElement.status as string);
             notification.Text = notificationElement.text as string;
             notification.Type = NotificationTypeHelpers.Parse(notificationElement.item.rel as string);
@@ -45,7 +45,7 @@ namespace SpeedrunComSharp
 
             //Parse Links
 
-            var links = notificationElement.links as IList<dynamic>;
+            var links = notificationElement as IList<dynamic>;
 
             if (links != null)
             {
