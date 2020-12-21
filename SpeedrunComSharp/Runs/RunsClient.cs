@@ -244,5 +244,29 @@ namespace SpeedrunComSharp
 
             return Run.Parse(baseClient, result.data);
         }
+
+        public void ChangeStatus(string runID, RunStatusType newStatus, string rejectReason = " ")
+        {
+            if (string.IsNullOrEmpty(runID) || newStatus == RunStatusType.New)
+            {
+                throw new ArgumentException();
+            }
+
+            dynamic putBody = new ExpandoObject(), status = new ExpandoObject();
+
+            if(newStatus == RunStatusType.Verified)
+            {
+                status.status = "verified";
+            }
+            else
+            {
+                status.status = "rejected";
+                status.reason = rejectReason;
+            }
+
+            putBody.status = status;
+            var uri = GetRunsUri("/" + runID + "/status");
+            var result = baseClient.DoPutRequest(uri, Newtonsoft.Json.JsonConvert.SerializeObject(putBody, Newtonsoft.Json.Formatting.Indented));
+        }
     }
 }

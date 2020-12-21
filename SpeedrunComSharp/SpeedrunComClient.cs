@@ -188,6 +188,32 @@ namespace SpeedrunComSharp
             }
         }
 
+        internal dynamic DoPutRequest(Uri uri, string putBody)
+        {
+            try
+            {
+                return JSON.FromUriPut(uri, UserAgent, AccessToken, Timeout, putBody);
+            }
+            catch (WebException ex)
+            {
+                try
+                {
+                    using (var stream = ex.Response.GetResponseStream())
+                    {
+                        throw ParseException(stream);
+                    }
+                }
+                catch (APIException ex2)
+                {
+                    throw ex2;
+                }
+                catch
+                {
+                    throw ex;
+                }
+            }
+        }
+
         internal dynamic DoRequest(Uri uri)
         {
             lock (this)

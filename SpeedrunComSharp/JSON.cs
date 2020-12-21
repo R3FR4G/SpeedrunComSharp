@@ -54,6 +54,31 @@ namespace SpeedrunComSharp
             return FromResponse(response);
         }
 
+        public static ExpandoObject FromUriPut(Uri uri, string userAgent, string accessToken, TimeSpan timeout, string putBody)
+        {
+            HttpWebRequest request = (HttpWebRequest)WebRequest.Create(uri);
+
+            request.Timeout = (int)timeout.TotalMilliseconds;
+            request.Method = "PUT";
+            request.UserAgent = userAgent;
+
+            if (!string.IsNullOrEmpty(accessToken))
+            {
+                request.Headers.Add("X-API-Key", accessToken.ToString());
+            }
+
+            request.ContentType = "application/json";
+
+            using (var writer = new StreamWriter(request.GetRequestStream()))
+            {
+                writer.Write(putBody);
+            }
+
+            var response = request.GetResponse();
+
+            return FromResponse(response);
+        }
+
         public static ExpandoObject FromUriPost(Uri uri, string userAgent, string accessToken, TimeSpan timeout, string postBody)
         {
             HttpWebRequest request = WebRequest.Create(uri) as HttpWebRequest;
