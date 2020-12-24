@@ -45,7 +45,7 @@ namespace SpeedrunComSharp
 
             //Parse Links
 
-            var properties = levelElement.Properties as IDictionary<string, dynamic>;
+            var properties = levelElement as IDictionary<string, dynamic>;
             var links = properties["links"] as IEnumerable<dynamic>;
 
             var gameUri = links.First(x => x.rel == "game").uri as string;
