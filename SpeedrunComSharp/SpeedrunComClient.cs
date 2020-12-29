@@ -35,7 +35,7 @@ namespace SpeedrunComSharp
         }
 
         public string UserAgent { get; private set; }
-        private Dictionary<Uri, dynamic> Cache { get; set; }
+        public Dictionary<Uri, dynamic> Cache { get; set; }
         public int MaxCacheElements { get; private set; }
 
         public TimeSpan Timeout { get; private set; }

@@ -73,12 +73,14 @@ namespace SpeedrunComSharp
 
             if (properties.ContainsKey("date"))
             {
-                run.Date = DateTime.ParseExact(properties["date"].ToString(), "yyyy-MM-dd", CultureInfo.InvariantCulture);
+                if (properties["date"] != null)
+                    run.Date = DateTime.ParseExact(properties["date"].ToString(), "yyyy-MM-dd", CultureInfo.InvariantCulture);
             }
 
             if (properties.ContainsKey("submitted"))
             {
-                run.DateSubmitted = (DateTime)runElement.submitted;
+                if (runElement.submitted != null)
+                    run.DateSubmitted = (DateTime)runElement.submitted;
             }
 
             run.Times = RunTimes.Parse(client, properties["times"]);
