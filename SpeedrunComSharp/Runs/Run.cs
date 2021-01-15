@@ -129,7 +129,7 @@ namespace SpeedrunComSharp
             }
             else
             {
-                var category = Category.Parse(client, properties["category"]["data"]) as Category;
+                var category = Category.Parse(client, properties["category"].data) as Category;
                 run.category = new Lazy<Category>(() => category);
 
                 if (category != null)
@@ -149,13 +149,20 @@ namespace SpeedrunComSharp
             }
             else
             {
-                Level level = Level.Parse(client, properties["level"].data);
-
-                run.level = new Lazy<Level>(() => level);
-
-                if (level != null)
+                if(properties["level"].data as string != null)
                 {
-                    run.LevelID = level.ID;
+                    Level level = Level.Parse(client, properties["level"].data);
+
+                    run.level = new Lazy<Level>(() => level);
+
+                    if (level != null)
+                    {
+                        run.LevelID = level.ID;
+                    }
+                }
+                else
+                {
+                    run.level = new Lazy<Level>(() => null);
                 }
             }
 
