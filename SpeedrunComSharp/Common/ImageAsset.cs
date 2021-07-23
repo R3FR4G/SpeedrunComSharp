@@ -12,6 +12,9 @@ namespace SpeedrunComSharp
 
         public static ImageAsset Parse(SpeedrunComClient client, dynamic imageElement)
         {
+//FIXME: Implement the new ImageAsset
+return null;
+ 
             if (imageElement == null || imageElement.uri == null || imageElement.width == null || imageElement.height == null)
                 return null;
 
